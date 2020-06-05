@@ -3,6 +3,7 @@ from pytorch_pretrained_bert import BertForMaskedLM,tokenization
 import torch
 import sys
 import csv
+import codecs
 
 model_name = 'bert-large-uncased'
 if 'base' in sys.argv: model_name = 'bert-base-uncased'
@@ -120,9 +121,41 @@ def eval_gulordava():
             print(i,file=sys.stderr)
             sys.stdout.flush()
 
+
+def prepare_ru():
+    file = 'snippet.txt'
+    in_data = codecs.open(file, 'r', encoding='utf-8')
+    new_file = 'ru_table.txt'
+    out = codecs.open(new_file, 'w', encoding='utf-8')
+    positive_sent = []
+    negative_sent = []
+    for line in in_data:
+        if line.startswith('@@@'):
+            continue
+        elif line == "" or line == "\n":
+            neg_sent = ' '.join(negative_sent)
+            pos_sent = ' '.join(positive_sent)
+            out.write(pos_sent + '\t' + neg_sent + '\n')
+        else:
+            split = line.split('\t')
+            word = split[0]
+            replaced = split[1]
+            if replaced != 'None':
+                positive_sent.append(replaced)
+            else:
+                positive_sent.append(word)
+            negative_sent.append(word)
+    if positive_sent and negative_sent:
+        neg_sent = ' '.join(negative_sent)
+        pos_sent = ' '.join(positive_sent)
+        out.write(pos_sent + '\t' + neg_sent + '\n')
+
+
 if 'marvin' in sys.argv:
     eval_marvin()
 elif 'gul' in sys.argv:
     eval_gulordava()
+elif 'ru' in sys.argv:
+    prepare_ru()
 else:
     eval_lgd()
